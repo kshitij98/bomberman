@@ -58,10 +58,30 @@ class Board:
 			for j in range(self.board_width):
 				if ('a' <= self.map[i][j] and self.map[i][j] <= 'z'):
 					self.map[i][j] = ' '
+				elif (self.map[i][j] == 'P'):
+					player_x, player_y = i, j
 
 		for i in range(self.number_of_enemies):
 			x, y = self.enemies[i].getXY()
+			if (self.map[x][y] == 'P'):
+				return False		
 			self.map[x][y] = self.enemies[i].get_type()
+
+		self.map[player_x][player_y] = ' '
+		x, y = self.player.getXY()
+		self.map[x][y] = 'P'
+
+
+	def key_bindings(self, key):
+		if (key == 'w'):
+			self.player.move(3)
+		elif (key == 'a'):
+			self.player.move(2)
+		elif (key == 's'):
+			self.player.move(1)
+		elif (key == 'd'):
+			self.player.move(0)
+
 
 	def start_game(self):
 		current_time = 0
@@ -72,6 +92,8 @@ class Board:
 
 			key = self.keyboard.get_key()
 			print(key)
+
+			self.key_bindings(key)
 			# print(self.enemies)
 
 			for i in range(self.number_of_enemies):
@@ -81,5 +103,5 @@ class Board:
 			self.update_positions()
 			self.keyboard.flush_istream()
 			current_time = (current_time + 1) % MOD
-			time.sleep(0.05)
+			time.sleep(0.06)
 			os.system('clear')
