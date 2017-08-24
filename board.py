@@ -1,16 +1,19 @@
-from config import look, color, time_constant
+import config
 import os
 import time
 import random
 from person import Player, Enemy
 from keyboard import Keyboard
+from bomb import Bomb
 
 class Board:
-	def __init__(self, board_height=21, board_width=21, enemies={'a': 10, 'b': 5, 'c': 2, 'd': 1}, number_of_bricks=40): # Add board settings
+	def __init__(self, board_height=21, board_width=21, enemies={'a': 1, 'b': 1, 'c': 1, 'd': 1}, number_of_bricks=40): # Add board settings
+		self.gameNotOver = self.gameNotPaused = True
 		self.board_height = board_height
 		self.board_width = board_width
 		self.map = [[' ' for i in range(board_width)] for j in range(board_height)]
 		self.enemies = []
+		self.bomb = Bomb()
 
 		self.available_blocks = []
 		for i in range(board_height):
@@ -44,64 +47,117 @@ class Board:
 		str = ""
 		for i in range(self.board_height):
 			for j in range(self.board_width):
-				design = look(self.map[i][j])
-				str += color(self.map[i][j]) + design[:4] + '\033[0m'
+				design = config.look(self.map[i][j])
+				str += config.color(self.map[i][j]) + design[:4] + '\033[0m'
 			str += '\n'
 			for j in range(self.board_width):
-				design = look(self.map[i][j])
-				str += color(self.map[i][j]) + design[4:8] + '\033[0m'
+				design = config.look(self.map[i][j])
+				str += config.color(self.map[i][j]) + design[4:8] + '\033[0m'
 			str += '\n'
 		return str
 
 	def update_positions(self):
+		player_x = -1
 		for i in range(self.board_height):
 			for j in range(self.board_width):
-				if ('a' <= self.map[i][j] and self.map[i][j] <= 'z'):
+				if ('a' <= self.map[i][j] and self.map[i][j] <= 'z' or self.map[i][j] == 'X'):
 					self.map[i][j] = ' '
 				elif (self.map[i][j] == 'P'):
 					player_x, player_y = i, j
 
 		for i in range(self.number_of_enemies):
-			x, y = self.enemies[i].getXY()
-			if (self.map[x][y] == 'P'):
-				return False		
-			self.map[x][y] = self.enemies[i].get_type()
+			if (self.enemies[i].isAlive()):
+				x, y = self.enemies[i].getXY()
+				if (self.map[x][y] == 'P'):
+					return 0
+				self.map[x][y] = self.enemies[i].get_type()
 
-		self.map[player_x][player_y] = ' '
+		if (player_x != -1): self.map[player_x][player_y] = ' '
 		x, y = self.player.getXY()
 		self.map[x][y] = 'P'
 
+		bomb = self.bomb.getPosition()
+		if (bomb):
+			x, y = bomb['x'], bomb['y']
+			self.map[x][y] = bomb['timer']
+			if (bomb['explode']):
+				direction = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+				if self.player.getX() == x and self.player.getY() == y:
+					return 0
+				intensity = bomb['intensity']
+				for i in range(4):
+					for k in range(1, intensity+1):
+						x2, y2 = x + k*direction[i][0], y + k*direction[i][1]
+						if (x2 == self.player.getX() and y2 == self.player.getY()):
+							return 0
+						if (self.map[x2][y2] == 'B'):
+							self.map[x2][y2] = 'X'
+							break
+						elif (self.map[x2][y2] == 'W'):
+							break
+						self.map[x2][y2] = 'X'
+		else:
+			x, y = self.bomb.getXY()
+			if self.map[x][y] == '0':
+				self.map[x][y] = ' '
+
+
+		for i in range(self.number_of_enemies):
+			x, y = self.enemies[i].getXY()
+			if (self.map[x][y] == 'X'):
+				self.enemies[i].kill()
+
+		return 1
+
+	def isNotObstacle(self, x, y):
+		if (self.map[x][y] == ' '): return 1		
+		if (self.map[x][y] == 'W'): return 0
+		if (self.map[x][y] == 'B'): return 0
+		if (self.map[x][y] == '5'): return 0
+		if (self.map[x][y] == '4'): return 0
+		if (self.map[x][y] == '3'): return 0
+		if (self.map[x][y] == '2'): return 0
+		if (self.map[x][y] == '1'): return 0
+		if (self.map[x][y] == '0'): return 0
+		return 1
+
 
 	def key_bindings(self, key):
-		if (key == 'w'):
-			self.player.move(3)
-		elif (key == 'a'):
-			self.player.move(2)
-		elif (key == 's'):
-			self.player.move(1)
-		elif (key == 'd'):
-			self.player.move(0)
-
+		if self.gameNotPaused:
+			if (key == 'd'):	 self.player.move(0, self.isNotObstacle(self.player.getX(), self.player.getY()+1))
+			elif (key == 's'):	 self.player.move(1, self.isNotObstacle(self.player.getX()+1, self.player.getY()))
+			elif (key == 'a'):	 self.player.move(2, self.isNotObstacle(self.player.getX(), self.player.getY()-1))
+			elif (key == 'w'):	 self.player.move(3, self.isNotObstacle(self.player.getX()-1, self.player.getY()))
+			elif (key == 'b'):	 self.bomb.plantBomb(self.player.getX(), self.player.getY(), 3)
+		if (key == 'p'):	 self.gameNotPaused = not self.gameNotPaused
 
 	def start_game(self):
 		current_time = 0
-		MOD = time_constant('main')
+		MOD = config.time_constant('main')
+		sleepTime = config.sleepTime
 
-		while True:
+		while self.gameNotOver:
 			print(self)
 
 			key = self.keyboard.get_key()
-			print(key)
+			self.keyboard.flush_istream()
+			# print(key)
 
 			self.key_bindings(key)
 			# print(self.enemies)
+			if self.gameNotPaused == False:
+				time.sleep(sleepTime)
+				os.system('clear')
+				continue
 
 			for i in range(self.number_of_enemies):
 				x, y = self.enemies[i].getXY()
-				self.enemies[i].move_randomly([(self.map[x][y+1] != 'B' and self.map[x][y+1] != 'W' and self.map[x][y+1] != 'X') * 0.25, (self.map[x+1][y] != 'B' and self.map[x+1][y] != 'W' and self.map[x+1][y] != 'X') * 0.25, (self.map[x][y-1] != 'B' and self.map[x][y-1] != 'W' and self.map[x][y-1] != 'X') * 0.25, (self.map[x-1][y] != 'B' and self.map[x-1][y] != 'W' and self.map[x-1][y] != 'X') * 0.25], current_time)
+				self.enemies[i].move_randomly([self.isNotObstacle(x, y+1), self.isNotObstacle(x+1, y), self.isNotObstacle(x, y-1), self.isNotObstacle(x-1, y)], current_time)
 
-			self.update_positions()
-			self.keyboard.flush_istream()
+			self.bomb.updateBomb()
+
+			if self.update_positions() == 0:
+				return False
 			current_time = (current_time + 1) % MOD
-			time.sleep(0.06)
+			time.sleep(sleepTime)
 			os.system('clear')
