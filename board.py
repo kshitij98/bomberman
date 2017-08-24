@@ -2,18 +2,21 @@ import config
 import os
 import time
 import random
+from score_card import ScoreCard
 from person import Player, Enemy
 from keyboard import Keyboard
 from bomb import Bomb
 
 class Board:
-	def __init__(self, board_height=21, board_width=21, enemies={'a': 1, 'b': 1, 'c': 1, 'd': 1}, number_of_bricks=40): # Add board settings
+	def __init__(self, board_height=21, board_width=21, enemies={'a': 1, 'b': 1, 'c': 1, 'd': 1}, number_of_bricks=40, time=120): # Add board settings
 		self.gameNotOver = self.gameNotPaused = True
 		self.board_height = board_height
 		self.board_width = board_width
 		self.map = [[' ' for i in range(board_width)] for j in range(board_height)]
 		self.enemies = []
 		self.bomb = Bomb()
+		self.timeLeft = int(time / config.sleepTime)
+		self.scoreCard = ScoreCard()
 
 		self.available_blocks = []
 		for i in range(board_height):
@@ -129,15 +132,18 @@ class Board:
 			elif (key == 'a'):	 self.player.move(2, self.isNotObstacle(self.player.getX(), self.player.getY()-1))
 			elif (key == 'w'):	 self.player.move(3, self.isNotObstacle(self.player.getX()-1, self.player.getY()))
 			elif (key == 'b'):	 self.bomb.plantBomb(self.player.getX(), self.player.getY(), 3)
-		if (key == 'p'):	 self.gameNotPaused = not self.gameNotPaused
+		if (key == ' '):	 self.gameNotPaused = not self.gameNotPaused
 
 	def start_game(self):
 		current_time = 0
 		MOD = config.time_constant('main')
 		sleepTime = config.sleepTime
 
-		while self.gameNotOver:
+		while self.gameNotOver and self.timeLeft>=0:
 			print(self)
+			print(self.scoreCard)
+			if (not self.scoreCard.update()):
+				return False
 
 			key = self.keyboard.get_key()
 			self.keyboard.flush_istream()
@@ -159,5 +165,6 @@ class Board:
 			if self.update_positions() == 0:
 				return False
 			current_time = (current_time + 1) % MOD
+			self.timeLeft -= 1
 			time.sleep(sleepTime)
 			os.system('clear')

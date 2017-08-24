@@ -1,4 +1,4 @@
-from config import time_constant
+import config
 import random
 
 class Person:
@@ -30,6 +30,17 @@ class Person:
 class Player(Person):
 	def __init__(self, x, y):
 		Person.__init__(self, x, y)
+		self.immortal = False
+		self.timeLeft = -1
+		self.sleepTime = config.sleepTime
+
+	# def makeImmortal(self, x=1, y=1, time=10):
+		# if (self.timeLeft != -1): return False
+		# self.timeLeft = int(time / self.sleepTime)
+		# self.immortal = True
+
+	# def isImmortal(self):
+		# return self.immortal
 
 	def move(self, direction, isPossible):
 		if (isPossible == 1):
@@ -39,7 +50,7 @@ class Enemy(Person):
 	def __init__(self, x, y, enemy_type):
 		Person.__init__(self, x, y)
 		self.type = enemy_type
-		self.time_constant = time_constant(enemy_type)
+		self.time_constant = config.time_constant(enemy_type)
 		self.lastMove = 0
 
 	def get_type(self):
