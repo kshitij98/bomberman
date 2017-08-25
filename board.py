@@ -9,39 +9,47 @@ from bomb import Bomb
 
 
 class Board:
-    def __init__(self, board_height=21, board_width=21, enemies={'a': 1, 'b': 1, 'c': 1, 'd': 1}, number_of_bricks=40, time=120):
+    def __init__(self,
+                 enemies={'a': 2, 'b': 1},
+                 brd_height=21,
+                 brd_width=21,
+                 bricks=40,
+                 time=120):
         self.gameNotOver = self.gameNotPaused = True
-        self.board_height = board_height
-        self.board_width = board_width
-        self.map = [[' ' for i in range(board_width)] for j in range(board_height)]
+        self.brd_height = brd_height
+        self.brd_width = brd_width
+        self.map = [[' ' for i in range(brd_width)] for j in range(brd_height)]
         self.enemies = []
         self.bomb = Bomb()
         self.timeLeft = int(time / config.sleepTime)
         self.scoreCard = ScoreCard()
 
-        self.available_blocks = []
-        for i in range(board_height):
-            for j in range(board_width):
-                if (i == 0 or j == 0 or i == (board_height - 1) or j == (board_width - 1) or (i % 2 == 0 and j % 2 == 0)):
+        self.free_blocks = []
+        for i in range(brd_height):
+            for j in range(brd_width):
+                if i == 0 or j == 0 or i == (brd_height - 1):
+                    self.map[i][j] = 'W'
+                elif j == (brd_width - 1) or (i % 2 == 0 and j % 2 == 0):
                     self.map[i][j] = 'W'
                 elif (i > 2 or j > 2):
-                    self.available_blocks.append([i, j])
+                    self.free_blocks.append([i, j])
 
-        random.shuffle(self.available_blocks)
+        random.shuffle(self.free_blocks)
 
         temp = self.types_of_enemies = len(enemies)
 
-        for i in range(number_of_bricks):
-            self.map[self.available_blocks[i][0]][self.available_blocks[i][1]] = 'B'
+        for i in range(bricks):
+            self.map[self.free_blocks[i][0]][self.free_blocks[i][1]] = 'B'
 
-        curr = number_of_bricks
+        curr = bricks
         keys = list(enemies)
         for i in range(self.types_of_enemies):
             for j in range(enemies[keys[i]]):
-                self.map[self.available_blocks[curr][0]][self.available_blocks[curr][1]] = keys[i]
-                self.enemies.append(Enemy(self.available_blocks[curr][0], self.available_blocks[curr][1], keys[i]))
+                x, y = self.free_blocks[curr][0], self.free_blocks[curr][1]
+                self.map[x][y] = keys[i]
+                self.enemies.append(Enemy(x, y, keys[i]))
                 curr += 1
-        self.number_of_enemies = curr - number_of_bricks
+        self.number_of_enemies = curr - bricks
 
         self.player = Player(1, 1)
         self.map[1][1] = 'P'
@@ -49,12 +57,12 @@ class Board:
 
     def __str__(self):
         str = ""
-        for i in range(self.board_height):
-            for j in range(self.board_width):
+        for i in range(self.brd_height):
+            for j in range(self.brd_width):
                 design = config.look(self.map[i][j])
                 str += config.color(self.map[i][j]) + design[:4] + '\033[0m'
             str += '\n'
-            for j in range(self.board_width):
+            for j in range(self.brd_width):
                 design = config.look(self.map[i][j])
                 str += config.color(self.map[i][j]) + design[4:8] + '\033[0m'
             str += '\n'
@@ -62,9 +70,11 @@ class Board:
 
     def update_positions(self):
         player_x = -1
-        for i in range(self.board_height):
-            for j in range(self.board_width):
-                if ('a' <= self.map[i][j] and self.map[i][j] <= 'z' or self.map[i][j] == 'X'):
+        for i in range(self.brd_height):
+            for j in range(self.brd_width):
+                if 'a' <= self.map[i][j] and self.map[i][j] <= 'z':
+                    self.map[i][j] = ' '
+                elif self.map[i][j] == 'X':
                     self.map[i][j] = ' '
                 elif (self.map[i][j] == 'P'):
                     player_x, player_y = i, j
@@ -93,7 +103,9 @@ class Board:
                 for i in range(4):
                     for k in range(1, intensity+1):
                         x2, y2 = x + k*direction[i][0], y + k*direction[i][1]
-                        if (x2 == self.player.getX() and y2 == self.player.getY()):
+                        player_x = self.player.getX()
+                        player_y = self.player.getY()
+                        if x2 == player_x and y2 == player_y:
                             self.scoreCard.update(lives=-1)
                         if (self.map[x2][y2] == 'B'):
                             self.map[x2][y2] = 'X'
@@ -110,7 +122,8 @@ class Board:
         for i in range(self.number_of_enemies):
             x, y = self.enemies[i].getXY()
             if (self.map[x][y] == 'X'):
-                self.scoreCard.update(score=config.score(self.enemies[i].get_type()))
+                enemy_type = self.enemies[i].get_type()
+                self.scoreCard.update(score=config.score(enemy_type))
                 self.enemies[i].kill()
 
         return 1
@@ -137,17 +150,18 @@ class Board:
         return 1
 
     def key_bindings(self, key):
+        x, y = self.player.getX(), self.player.getY()
         if self.gameNotPaused:
             if (key == 'd'):
-                self.player.move(0, self.isNotObstacle(self.player.getX(), self.player.getY()+1))
+                self.player.move(0, self.isNotObstacle(x, y+1))
             elif (key == 's'):
-                self.player.move(1, self.isNotObstacle(self.player.getX()+1, self.player.getY()))
+                self.player.move(1, self.isNotObstacle(x+1, y()))
             elif (key == 'a'):
-                self.player.move(2, self.isNotObstacle(self.player.getX(), self.player.getY()-1))
+                self.player.move(2, self.isNotObstacle(x, y()-1))
             elif (key == 'w'):
-                self.player.move(3, self.isNotObstacle(self.player.getX()-1, self.player.getY()))
+                self.player.move(3, self.isNotObstacle(x-1, y()))
             elif (key == 'b'):
-                self.bomb.plantBomb(self.player.getX(), self.player.getY(), 3)
+                self.bomb.plantBomb(x, y(), 3)
         if (key == ' '):
             self.gameNotPaused = not self.gameNotPaused
 
@@ -173,7 +187,11 @@ class Board:
 
             for i in range(self.number_of_enemies):
                 x, y = self.enemies[i].getXY()
-                self.enemies[i].move_randomly([self.isNotObstacle(x, y+1), self.isNotObstacle(x+1, y), self.isNotObstacle(x, y-1), self.isNotObstacle(x-1, y)], current_time)
+                self.enemies[i].move_randomly([self.isNotObstacle(x, y+1),
+                                              self.isNotObstacle(x+1, y),
+                                              self.isNotObstacle(x, y-1),
+                                              self.isNotObstacle(x-1, y)],
+                                              current_time)
 
             self.bomb.updateBomb()
 
