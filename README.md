@@ -65,15 +65,15 @@ Enemy 4
 ## Controls
 ===========
 
-w: Move Up
-a: Move left
-s: Move down
-d: Move right
+`w`: Move Up
+`a`: Move left
+`s`: Move down
+`d`: Move right
+`b`: Plant Bomb
 
-b: Plant Bomb
-space: Pause Game
-q: Quit Game
-p: Powerup
+`space`: Pause Game
+`q`: Quit Game
+`p`: Powerup
 
 
 ## OOPS Concepts
