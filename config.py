@@ -1,4 +1,4 @@
-sleepTime = 0.06
+sleepTime = 0.08
 
 def look(character):
 	looks = {
@@ -48,3 +48,13 @@ def time_constant(character):
 		'P': 6,
 	}
 	return times[character]
+
+def score(character):
+	scores = {
+		'B': 20,
+		'a': 100,
+		'b': 100,
+		'c': 100,
+		'd': 150,
+	}
+	return scores[character]

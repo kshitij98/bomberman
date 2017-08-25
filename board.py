@@ -72,7 +72,7 @@ class Board:
 			if (self.enemies[i].isAlive()):
 				x, y = self.enemies[i].getXY()
 				if (self.map[x][y] == 'P'):
-					return 0
+					self.scoreCard.update(lives=-1)
 				self.map[x][y] = self.enemies[i].get_type()
 
 		if (player_x != -1): self.map[player_x][player_y] = ' '
@@ -86,15 +86,16 @@ class Board:
 			if (bomb['explode']):
 				direction = [[0, 1], [1, 0], [0, -1], [-1, 0]]
 				if self.player.getX() == x and self.player.getY() == y:
-					return 0
+					self.scoreCard.update(lives=-1)
 				intensity = bomb['intensity']
 				for i in range(4):
 					for k in range(1, intensity+1):
 						x2, y2 = x + k*direction[i][0], y + k*direction[i][1]
 						if (x2 == self.player.getX() and y2 == self.player.getY()):
-							return 0
+							self.scoreCard.update(lives=-1)
 						if (self.map[x2][y2] == 'B'):
 							self.map[x2][y2] = 'X'
+							self.scoreCard.update(score=config.score('B'))
 							break
 						elif (self.map[x2][y2] == 'W'):
 							break
@@ -108,6 +109,7 @@ class Board:
 		for i in range(self.number_of_enemies):
 			x, y = self.enemies[i].getXY()
 			if (self.map[x][y] == 'X'):
+				self.scoreCard.update(score=config.score(self.enemies[i].get_type()))
 				self.enemies[i].kill()
 
 		return 1
@@ -142,19 +144,18 @@ class Board:
 		while self.gameNotOver and self.timeLeft>=0:
 			print(self)
 			print(self.scoreCard)
-			if (not self.scoreCard.update()):
-				return False
 
 			key = self.keyboard.get_key()
 			self.keyboard.flush_istream()
-			# print(key)
-
 			self.key_bindings(key)
-			# print(self.enemies)
 			if self.gameNotPaused == False:
 				time.sleep(sleepTime)
 				os.system('clear')
 				continue
+
+			if (not self.scoreCard.update(time=-1)):
+				return False
+
 
 			for i in range(self.number_of_enemies):
 				x, y = self.enemies[i].getXY()
@@ -162,8 +163,7 @@ class Board:
 
 			self.bomb.updateBomb()
 
-			if self.update_positions() == 0:
-				return False
+			self.update_positions()
 			current_time = (current_time + 1) % MOD
 			self.timeLeft -= 1
 			time.sleep(sleepTime)
