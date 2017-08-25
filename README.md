@@ -7,42 +7,60 @@ The player must navigate Bomberman through a maze by destroying soft blocks and 
 Representation
 ==============
 
+```
 Bomberman
 [^^]
- ][ 
+ ][
+ ```
 
+```
 Wall
 ####
 ####
+```
 
+```
 Brick
 %%%%
 %%%%
+```
 
+
+```
 Bomb Timer
 3333
 3333
+```
 
+```
 Explosion
 eeee
 eeee
+```
 
+```
 Enemy 1
 \--/
 /aa\
+```
 
+```
 Enemy 2
 \--/
 /bb\
+```
 
+```
 Enemy 3
 \--/
 /cc\
+```
 
+```
 Enemy 4
 \@@/
 /@@\
-
+```
 
 Controls
 ========
