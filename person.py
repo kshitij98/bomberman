@@ -44,9 +44,9 @@ class Player(Person):
     # def isImmortal(self):
         # return self.immortal
 
-    def move(self, direction, isPossible):
-        if (isPossible == 1):
-            super().move(direction)
+    def move(self, direction):
+        if (direction >= 10):
+            super().move(direction % 10)
 
 
 class Enemy(Person):

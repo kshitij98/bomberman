@@ -60,6 +60,10 @@ Enemy 4
 /@@\
 ```
 
+```
+P.S. Representations can be changed by editing the file config.py.
+```
+
 ## Controls
 
 `w`: Move Up
@@ -82,14 +86,14 @@ Enemy 4
 ## OOPS Concepts
 
 ### Modularity
-Each elemennt has been decomposed into independant modules
+Each elemennt has been decomposed into independant modules.
 
 ### Inheritence
-Player and Enemy classes are inheriting from Person class as they have a lot of variables and member functions in common
+Player and Enemy classes are inheriting from Person class as they have a lot of variables and member functions in common.
 
 
 ### Polymorphism
-
+move function is showing polymorphism.
 
 ### Encapsulation
 Only the required functions are public in each class otherwise every variable and function is private.

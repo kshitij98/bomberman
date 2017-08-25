@@ -5,10 +5,10 @@ from getch import getch
 
 class ScoreCard:
     def __init__(self, timeLeft=120, score=0, lives=3):
-        self.timeLeft = int(timeLeft / config.sleep)
+        self.timeLeft = int(timeLeft / config.sleepTime)
         self.score = score
         self.lives = lives
-        self.sleep = config.sleep
+        self.sleep = config.sleepTime
 
     def __str__(self):
         string = "TIME LEFT: "
